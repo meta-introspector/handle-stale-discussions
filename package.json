@@ -2,8 +2,9 @@
   "name": "handle-stale-discussions",
   "version": "1.0.0",
   "description": "* Purpose: OSDS will mark discussion answers as proposed-answer and after N number of days, the bot will go in and automatically mark that answer as the discussion answer.",
-  "main": "jest.config.js",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "tsc",
     "test": "jest",
     "codegen": "graphql-codegen --config codegen.yml"
   },
