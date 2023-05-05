@@ -1,4 +1,4 @@
-name: LabelAnswerableDiscussions
+name: HandleStaleDiscussions
 on:
   schedule:
     - cron: '*/30 * * * *'
