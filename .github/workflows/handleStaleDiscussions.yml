@@ -1,4 +1,4 @@
-name: LabelAnswerableDiscussions
+name: HandleStaleDiscussions
 on:
   schedule:
     - cron: '*/30 * * * *'
@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Close stale discussions
+      - name: Handle stale discussions
         uses: ./
         env:
           GITHUB_TOKEN:  ${{secrets.GITHUB_TOKEN}}
