@@ -159,7 +159,6 @@ export async function processComments(comments: DiscussionCommentConnection, aut
 export function closeDiscussionsInAbsenceOfReaction(commentDate: Date, author: string, discussionId: string) {
   const currentDate: Date = new Date();
   const diffInMs: number = currentDate.getTime() - commentDate.getTime();
-  const diffInHrs: number = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInDays: number = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
   core.debug(`current date: ${currentDate} and the comment date : ${commentDate}`);
