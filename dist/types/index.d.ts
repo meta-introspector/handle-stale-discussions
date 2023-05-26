@@ -2,7 +2,7 @@ import { DiscussionCommentConnection, DiscussionConnection } from '@octokit/grap
 import { ReactionContent, MarkDiscussionCommentAsAnswerMutation, UpdateDiscussionCommentMutation, AddLabelToDiscussionMutation } from "./generated/graphql";
 export declare function getAnswerableDiscussionCategoryIDs(actor: string, repoName: string): Promise<any>;
 export declare function getTotalDiscussionCount(actor: string, repoName: string, categoryID: string): Promise<number | undefined>;
-export declare function getDiscussionMetaData(actor: string, repoName: string, categoryID: string, labelId: string): Promise<void>;
+export declare function getDiscussionMetaData(actor: string, repoName: string, categoryID: string): Promise<DiscussionConnection>;
 export declare function processDiscussions(discussions: DiscussionConnection, labelId: string): Promise<void>;
 export declare function processComments(comments: DiscussionCommentConnection, author: string, discussionId: string, labelId: string): Promise<void>;
 export declare function closeDiscussionsInAbsenceOfReaction(commentDate: Date, author: string, discussionId: string): void;
