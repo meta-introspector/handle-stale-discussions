@@ -1,5 +1,6 @@
 import { DiscussionCommentConnection, DiscussionConnection } from '@octokit/graphql-schema';
 import * as github from '@actions/github';
+import * as core from '@actions/core';
 import { githubClient } from "./client";
 import {
     GetAnswerableDiscussionIdQuery, GetAnswerableDiscussionIdQueryVariables, GetAnswerableDiscussionId,
@@ -8,15 +9,17 @@ import {
     ReactionContent,
     MarkDiscussionCommentAsAnswerMutation, MarkDiscussionCommentAsAnswer,
     AddDiscussionCommentMutation, UpdateDiscussionComment, UpdateDiscussionCommentMutation, 
-    AddDiscussionComment, WhoAmI, WhoAmIQuery, 
+    AddDiscussionComment, 
     CloseDiscussionAsResolvedMutation, CloseDiscussionAsResolved, 
-    CloseDiscussionAsOutdatedMutation, CloseDiscussionAsOutdated, AddLabelToDiscussionMutation, AddLabelToDiscussion, GetLabelIdQuery, GetLabelId, AddLabelToDiscussionMutationVariables
+    CloseDiscussionAsOutdatedMutation, CloseDiscussionAsOutdated, AddLabelToDiscussionMutation, AddLabelToDiscussion, GetLabelIdQuery, GetLabelId
 } from "./generated/graphql";
 
+const STALE_DISCUSSION_RESPONSE = 'please take a look at the suggested answer. If you want to keep this discussion open, please provide a response.'
+
 //getting answerable discussion category id
-export async function getAnswerableDiscussionCategoryID(actor: string, repoName: string): Promise<any> {
+export async function getAnswerableDiscussionCategoryIDs(actor: string, repoName: string): Promise<any> {
     
-    const answerableCategoryID: string[] = [];
+    const answerableCategoryIDs: string[] = [];
     const result = await githubClient().query<GetAnswerableDiscussionIdQuery, GetAnswerableDiscussionIdQueryVariables>({
         query: GetAnswerableDiscussionId,
         variables: {
@@ -32,16 +35,16 @@ export async function getAnswerableDiscussionCategoryID(actor: string, repoName:
     //iterate over discussion categories to get the id for answerable one
     result.data.repository.discussionCategories.edges?.forEach(element => {
         if (element?.node?.isAnswerable == true) {
-            answerableCategoryID.push(element?.node?.id);
+            answerableCategoryIDs.push(element?.node?.id);
         }
     })
 
-    if (answerableCategoryID.length === 0)
+    if (answerableCategoryIDs.length === 0)
     {
         throw new Error("There are no Answerable category discussions in this repository");
     }
 
-    return answerableCategoryID;
+    return answerableCategoryIDs;
 }
 
 export async function getTotalDiscussionCount(actor: string, repoName: string, categoryID: string) {
@@ -59,7 +62,7 @@ export async function getTotalDiscussionCount(actor: string, repoName: string, c
         throw new Error("Error in reading discussions count");
     }
 
-    console.log(`Total discussion count : ${resultCountObject.data.repository?.discussions.totalCount}`);
+    core.debug(`Total discussion count : ${resultCountObject.data.repository?.discussions.totalCount}`);
     return resultCountObject.data.repository?.discussions.totalCount;
 }
 
@@ -94,17 +97,17 @@ export async function processDiscussions(discussions: DiscussionConnection,label
         }
         else if (!discussion?.node?.locked) {
 
-            console.log(`\n Current discussion id: ${discussionId}`);
-            console.log(`Current discussion : ${discussion?.node?.bodyText}`);
+            core.debug(`\n Current discussion id: ${discussionId}`);
+            core.debug(`Current discussion : ${discussion?.node?.bodyText}`);
 
             const author = discussion?.node?.author?.login;
-            console.log(`Author of this discussions is: ${author}`);
+            core.debug(`Author of this discussions is: ${author}`);
 
             if (discussion?.node?.answer?.bodyText) {
-                console.log(`Posted answer : ${discussion?.node?.answer?.bodyText}, No action needed `);
+                core.debug(`Posted answer : ${discussion?.node?.answer?.bodyText}, No action needed `);
             }
             else {
-                console.log("Checking reactions on latest comment provided on discussion ");
+                core.debug("Checking reactions on latest comment provided on discussion ");
                 await processComments(discussion?.node?.comments as DiscussionCommentConnection, author || "", discussionId, labelId);
             }
         }
@@ -126,11 +129,11 @@ export async function processComments(comments: DiscussionCommentConnection, aut
             //check for the presence of keyword - @bot proposed-answer
             if ((comment?.node?.bodyText.indexOf("@bot proposed-answer") >= 0) && (comment?.node?.reactions.nodes?.length != 0)) {
                 //means answer was proposed earlier, check reactions to this comment
-                console.log("Propose answer keyword found at : " + comment?.node?.bodyText.indexOf("@bot proposed-answer"));
+                core.debug("Propose answer keyword found at : " + comment?.node?.bodyText.indexOf("@bot proposed-answer"));
 
-                //if reaction is - heart/thumbs up/hooray, mark comment as answered else mention osds teammember to take a look
+                //if reaction is - heart/thumbs up/hooray, mark comment as answered else mention repo maintainer to take a look
                 comment?.node?.reactions.nodes?.forEach((reaction) => {
-                    console.log(`Reaction to the latest comment is : ${reaction?.content}`);
+                    core.debug(`Reaction to the latest comment is : ${reaction?.content}`);
                     triggerReactionContentBasedAction(reaction?.content! as ReactionContent, comment.node?.bodyText!, discussionId, comment.node?.id!,labelId);
                 })
             }
@@ -140,19 +143,18 @@ export async function processComments(comments: DiscussionCommentConnection, aut
                 const updatedAt = comment?.node?.updatedAt;
                 const commentDate = new Date(updatedAt.toString());
 
-                console.log("No reactions found");
+                core.debug("No reactions found");
                 remindAuthorForAction(commentDate, author!, discussionId);
             }
-            else if ((comment?.node?.bodyText.indexOf("Could you please take a look at the suggested answer. In absence of reply, we would be closing this discussion for staleness soon") >= 0) && (comment?.node?.reactions.nodes?.length == 0)) 
+            else if ((comment?.node?.bodyText.indexOf(STALE_DISCUSSION_RESPONSE) >= 0) && (comment?.node?.reactions.nodes?.length == 0)) 
             {
                 const updatedAt = comment?.node?.updatedAt;
                 const commentDate = new Date(updatedAt.toString());
 
-                console.log("Discussion author has not responded in a while, so closing the discussion");
                 closeDiscussionsInAbsenceOfReaction(commentDate, author!, discussionId);
             }
             else {
-                console.log("No answer proposed, no action needed ");
+                core.debug("No answer proposed, no action needed ");
             }
         }
     })
@@ -165,12 +167,13 @@ export function closeDiscussionsInAbsenceOfReaction(commentDate: Date, author: s
     const diffInHrs: number = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays: number = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    console.log(`current date: ${currentDate} and the comment date : ${commentDate}`);
+    core.debug(`current date: ${currentDate} and the comment date : ${commentDate}`);
     if ((diffInDays >= 4)) {
-        const responseText = "Closing the discussion fot staleness";
-        console.log("Responsetext: " + responseText);
-        AddCommentToDiscussion(discussionId, responseText);
-        closeDiscussionAsOutdated(discussionId);
+      core.info("Discussion author has not responded in a while, so closing the discussion");
+      const responseText = "Closing the discussion fot staleness";
+      core.debug("Responsetext: " + responseText);
+      AddCommentToDiscussion(discussionId, responseText);
+      closeDiscussionAsOutdated(discussionId);
     }
 }
 
@@ -181,18 +184,18 @@ export function remindAuthorForAction(commentDate: Date, author: string, discuss
     const diffInHrs: number = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays: number = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    console.log(`current date: ${currentDate} and the comment date : ${commentDate}`);
-    console.log(`Answer was proposed ${diffInDays} days and ${diffInHrs} hrs ago.`);
+    core.debug(`current date: ${currentDate} and the comment date : ${commentDate}`);
+    core.debug(`Answer was proposed ${diffInDays} days and ${diffInHrs} hrs ago.`);
 
     if ((diffInDays >= 7)) {
-        const responseText = "Hey @" + author + ", Could you please take a look at the suggested answer. In absence of reply, we would be closing this discussion for staleness soon.";
-        console.log("Responsetext: " + responseText);
+        const responseText = "Hey @" + author + ", " + STALE_DISCUSSION_RESPONSE;
+        core.debug("Responsetext: " + responseText);
         AddCommentToDiscussion(discussionId, responseText);
     }
 }
 
 export async function triggerReactionContentBasedAction(content: ReactionContent, bodyText: string, discussionId: string, commentId: string,labelId: string) {
-    console.log("Printing content reaction :  " + content);
+    core.debug("Printing content reaction :  " + content);
 
     if (content.length === 0)
     {
@@ -200,23 +203,23 @@ export async function triggerReactionContentBasedAction(content: ReactionContent
     }
 
     if ((content === ReactionContent.ThumbsUp) || (content === ReactionContent.Heart) || (content === ReactionContent.Hooray) || (content === ReactionContent.Laugh) || (content === ReactionContent.Rocket)) {
-        console.log("Thumbs Up| Heart received, Marking discussion as answered");
+        core.info("Positive reaction received. Marking discussion as answered");
 
         //remove the keyword from the comment and upate comment
         const updatedText = bodyText.replace("@bot proposed-answer", 'Answer: ');
-        console.log("updated text :" + updatedText);
+        core.debug("updated text :" + updatedText);
         await updateDiscussionComment(commentId, updatedText!);
-        await  markDiscussionCommentAsAnswer(commentId);
+        await markDiscussionCommentAsAnswer(commentId);
         await closeDiscussionAsResolved(discussionId);
     }
     else if ((content === ReactionContent.ThumbsDown) || (content === ReactionContent.Confused)) {
-        console.log("Thumbs down received, adding label-attention to receive further attention from OSDS Team member");
+        core.info("Negative reaction received. Adding attention label to receive further attention from a repository maintainer");
         await addLabelToDiscussion(discussionId,labelId);
 
     }
 }
 
-//mutation- adding label "attention" to discussion for further traction by OSDS Team
+//mutation- adding attention label to discussion for further traction
 export async function addLabelToDiscussion(discussionId: string, labelId: string) {
     
     if (discussionId === "")
@@ -224,7 +227,7 @@ export async function addLabelToDiscussion(discussionId: string, labelId: string
         throw new Error("Invalid discussion id, can not proceed!");
     }
 
-    console.log("discussion id : "+ discussionId+ "  labelid : "+ labelId);
+    core.debug("discussion id : "+ discussionId+ "  labelid : "+ labelId);
 
     const result = await githubClient().mutate<AddLabelToDiscussionMutation>({
         mutation: AddLabelToDiscussion,
@@ -308,7 +311,7 @@ export async function AddCommentToDiscussion(discussionId: string, body: string)
         throw new Error(`Couldn't create comment as discussionId is null!`);
     }
 
-    console.log("discussioniD :: " + discussionId + " bodyText ::" + body);
+    core.debug("discussionID :: " + discussionId + " bodyText ::" + body);
     const result = await githubClient().mutate<AddDiscussionCommentMutation>({
         mutation: AddDiscussionComment,
         variables: {
@@ -321,15 +324,6 @@ export async function AddCommentToDiscussion(discussionId: string, body: string)
     {
         throw new Error("Mutation adding comment to discussion failed with error");
     }
-}
-
-export async function whoAmI() {
-    const owner = await githubClient().query<WhoAmIQuery>({
-        query: WhoAmI,
-        },
-    );
-
-    return owner.data.viewer.login;
 }
 
 export async function getLabelId(owner: string, repoName: string, label: string) {
@@ -352,26 +346,25 @@ export async function getLabelId(owner: string, repoName: string, label: string)
 
 async function main() {
 
-    const owner: string = await whoAmI();
-    console.log(`Owner of this repo : ${owner}`);
+    const attentionLabelInput = core.getInput('attention-label', { required: false });
+    const attentionLabel = attentionLabelInput ? attentionLabelInput : "attention";
 
-    const actor = github.context.actor;
-    console.log(`Actor : ${actor}`);
+    const owner = github.context.repo.owner;
+    core.debug(`Owner of this repo : ${owner}`);
 
     const repo = github.context.repo.repo;
-    console.log(`Current repository : ${repo}`);
+    core.debug(`Current repository : ${repo}`);
 
-    const discussionCategoryIDList: string[] = await getAnswerableDiscussionCategoryID(actor, repo);
-
-    const labelId: string = await getLabelId(actor, repo, "attention");
-    console.log(`Label id for "attention" is  : ${labelId}`);
+    const labelId: string = await getLabelId(owner, repo, attentionLabel);
+    core.debug(`Label id for "attention" is  : ${labelId}`);
 
     // Iterate over all answerable discussion categories in repo
+    const discussionCategoryIDList: string[] = await getAnswerableDiscussionCategoryIDs(owner, repo);
     for (const discussionCategoryID of discussionCategoryIDList) {
-        console.log(`Iterating over discussionCategoryID : ${discussionCategoryID}`);
+        core.debug(`Iterating over discussionCategoryID : ${discussionCategoryID}`);
 
         //Get all unlocked discussions and iterate to check all conditions and take action
-        await getDiscussionMetaData(actor, repo, discussionCategoryID, labelId);
+        await getDiscussionMetaData(owner, repo, discussionCategoryID, labelId);
     }
 }
 

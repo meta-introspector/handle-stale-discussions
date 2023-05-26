@@ -1,6 +1,6 @@
 import { DiscussionCommentConnection, DiscussionConnection } from '@octokit/graphql-schema';
 import { ReactionContent, MarkDiscussionCommentAsAnswerMutation, UpdateDiscussionCommentMutation, AddLabelToDiscussionMutation } from "./generated/graphql";
-export declare function getAnswerableDiscussionCategoryID(actor: string, repoName: string): Promise<any>;
+export declare function getAnswerableDiscussionCategoryIDs(actor: string, repoName: string): Promise<any>;
 export declare function getTotalDiscussionCount(actor: string, repoName: string, categoryID: string): Promise<number | undefined>;
 export declare function getDiscussionMetaData(actor: string, repoName: string, categoryID: string, labelId: string): Promise<void>;
 export declare function processDiscussions(discussions: DiscussionConnection, labelId: string): Promise<void>;
@@ -14,5 +14,4 @@ export declare function closeDiscussionAsResolved(discussionId: string): Promise
 export declare function closeDiscussionAsOutdated(discussionId: string): Promise<string | undefined>;
 export declare function updateDiscussionComment(commentId: string, body: string): Promise<import("@apollo/client/core").FetchResult<UpdateDiscussionCommentMutation>>;
 export declare function AddCommentToDiscussion(discussionId: string, body: string): Promise<void>;
-export declare function whoAmI(): Promise<string>;
 export declare function getLabelId(owner: string, repoName: string, label: string): Promise<string>;

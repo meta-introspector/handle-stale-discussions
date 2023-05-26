@@ -1,10 +1,13 @@
 import {ApolloClient, HttpLink, InMemoryCache, NormalizedCacheObject} from '@apollo/client/core'
+import * as core from '@actions/core';
 import fetch from 'cross-fetch';
 
 export function githubClient(): ApolloClient<NormalizedCacheObject> {
-    if (!process.env.GITHUB_TOKEN) {
+    const tokenInput = core.getInput('github-token', { required: false });
+    const token = tokenInput || process.env.GITHUB_TOKEN;
+    if (!token) {
       throw new Error(
-        "You need to provide a Github personal access token as `GITHUB_TOKEN` env variable. See README for more info."
+        "You must provide a GitHub token as an input to this action, or as a `GITHUB_TOKEN` env variable. See README for more info."
       );
     }
   
@@ -12,7 +15,7 @@ export function githubClient(): ApolloClient<NormalizedCacheObject> {
       link: new HttpLink({
         uri: "https://api.github.com/graphql",
         headers: {
-          authorization: `token ${process.env.GITHUB_TOKEN}`,
+          authorization: `token ${token}`,
         },
         fetch
       }),
