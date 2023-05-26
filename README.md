@@ -29,5 +29,10 @@ jobs:
 ```
 
 ## Contributing 
-
 We welcome community contributions and pull requests. See [CONTRIBUTING.md](https://github.com/aws-github-ops/handle-stale-discussions/blob/main/CONTRIBUTING.md) for information on how to submit code.
+
+## License Summary
+This code is made available under the Apache-2.0 license.
+
+## Security Disclosures
+If you would like to report a potential security issue in this project, please do not create a GitHub issue.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
