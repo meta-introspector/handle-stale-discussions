@@ -14,6 +14,7 @@ import {
   CloseDiscussionAsOutdatedMutation, CloseDiscussionAsOutdated, AddLabelToDiscussionMutation, AddLabelToDiscussion, GetLabelIdQuery, GetLabelId
 } from "./generated/graphql";
 
+const PROPOSED_ANSWER_TEXT = '@bot proposed-answer';
 const STALE_DISCUSSION_REMINDER_RESPONSE = 'please take a look at the suggested answer. If you want to keep this discussion open, please provide a response.'
 const DAYS_UNTIL_STALE = parseInt(core.getInput('days-until-stale', { required: false })) || 7;
 const DAYS_UNTIL_CLOSE = parseInt(core.getInput('days-until-close', { required: false })) || 4;
@@ -124,10 +125,10 @@ export async function processComments(comments: DiscussionCommentConnection, aut
         throw new Error("Can not proceed with Null comment Id!");
       }
 
-      //check for the presence of keyword - @bot proposed-answer
-      if ((comment?.node?.bodyText.indexOf("@bot proposed-answer") >= 0) && (comment?.node?.reactions.nodes?.length != 0)) {
+      // check for the presence of proposed answer keyword
+      if ((comment?.node?.bodyText.indexOf(PROPOSED_ANSWER_TEXT) >= 0) && (comment?.node?.reactions.nodes?.length != 0)) {
         //means answer was proposed earlier, check reactions to this comment
-        core.debug("Propose answer keyword found at : " + comment?.node?.bodyText.indexOf("@bot proposed-answer"));
+        core.debug("Propose answer keyword found at : " + comment?.node?.bodyText.indexOf(PROPOSED_ANSWER_TEXT));
 
         //if reaction is - heart/thumbs up/hooray, mark comment as answered else mention repo maintainer to take a look
         comment?.node?.reactions.nodes?.forEach((reaction) => {
@@ -136,7 +137,7 @@ export async function processComments(comments: DiscussionCommentConnection, aut
         })
       }
 
-      else if ((comment?.node?.bodyText.indexOf("@bot proposed-answer") >= 0) && (comment?.node?.reactions.nodes?.length == 0)) {
+      else if ((comment?.node?.bodyText.indexOf(PROPOSED_ANSWER_TEXT) >= 0) && (comment?.node?.reactions.nodes?.length == 0)) {
         // if keyword is found but no reaction/comment received by author, remind discussion author to take a look
         const updatedAt = comment?.node?.updatedAt;
         const commentDate = new Date(updatedAt.toString());
@@ -202,7 +203,7 @@ export async function triggerReactionContentBasedAction(content: ReactionContent
     core.info("Positive reaction received. Marking discussion as answered");
 
     //remove the keyword from the comment and upate comment
-    const updatedText = bodyText.replace("@bot proposed-answer", 'Answer: ');
+    const updatedText = bodyText.replace(PROPOSED_ANSWER_TEXT, 'Answer: ');
     core.debug("updated text :" + updatedText);
     await updateDiscussionComment(commentId, updatedText!);
     await markDiscussionCommentAsAnswer(commentId);
