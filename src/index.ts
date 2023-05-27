@@ -15,6 +15,8 @@ import {
 } from "./generated/graphql";
 
 const STALE_DISCUSSION_REMINDER_RESPONSE = 'please take a look at the suggested answer. If you want to keep this discussion open, please provide a response.'
+const DAYS_UNTIL_STALE = parseInt(core.getInput('days-until-stale', { required: false })) || 7;
+const DAYS_UNTIL_CLOSE = parseInt(core.getInput('days-until-close', { required: false })) || 4;
 
 //getting answerable discussion category id
 export async function getAnswerableDiscussionCategoryIDs(actor: string, repoName: string): Promise<any> {
@@ -161,8 +163,9 @@ export function closeDiscussionsInAbsenceOfReaction(commentDate: Date, author: s
   const diffInMs: number = currentDate.getTime() - commentDate.getTime();
   const diffInDays: number = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
+
   core.debug(`current date: ${currentDate} and the comment date : ${commentDate}`);
-  if ((diffInDays >= 4)) {
+  if ((diffInDays >= DAYS_UNTIL_CLOSE)) {
     core.info("Discussion author has not responded in a while, so closing the discussion");
     const closeForStalenessResponseText = "Closing the discussion for staleness";
     core.debug("Responsetext: " + closeForStalenessResponseText);
@@ -181,7 +184,7 @@ export function remindAuthorForAction(commentDate: Date, author: string, discuss
   core.debug(`current date: ${currentDate} and the comment date : ${commentDate}`);
   core.debug(`Answer was proposed ${diffInDays} days and ${diffInHrs} hrs ago.`);
 
-  if ((diffInDays >= 7)) {
+  if ((diffInDays >= DAYS_UNTIL_STALE)) {
     const remindAuthorResponseText = "Hey @" + author + ", " + STALE_DISCUSSION_REMINDER_RESPONSE;
     core.debug("Responsetext: " + remindAuthorResponseText);
     AddCommentToDiscussion(discussionId, remindAuthorResponseText);

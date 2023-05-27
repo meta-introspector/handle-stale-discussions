@@ -28,6 +28,30 @@ jobs:
           attention-label: needs-attention
 ```
 
+## Inputs
+
+There are no required inputs to use this action, but you can configure the following:
+
+### github-token
+
+A GitHub token must be provided either as an input or as an environment variable.
+
+### attention-label
+
+Instead of the default `attention` label, you can use a label of another name if you'd like. Just make sure it's already created in your repository
+
+### days-until-stale
+
+This is the number of days before a discussion with a proposed answer will be considered stale. 
+
+The default number of days is 7.
+
+### days-until-close
+
+This is the number of days before a stale discussion will be closed. 
+
+The default number of days is 4.
+
 ## Contributing 
 We welcome community contributions and pull requests. See [CONTRIBUTING.md](https://github.com/aws-github-ops/handle-stale-discussions/blob/main/CONTRIBUTING.md) for information on how to submit code.
 
