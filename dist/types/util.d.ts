@@ -1,0 +1,11 @@
+import { DiscussionCommentEdge, ReactionContent } from "./generated/graphql";
+export declare function daysSinceComment(comment: DiscussionCommentEdge): number;
+export declare function isPositiveReaction(content: ReactionContent): boolean;
+export declare function isNegativeReaction(content: ReactionContent): boolean;
+export declare function containsPositiveReaction(comment: DiscussionCommentEdge): boolean;
+export declare function containsNegativeReaction(comment: DiscussionCommentEdge): boolean;
+export declare function hasReaction(comment: DiscussionCommentEdge): boolean;
+export declare function containsKeyword(comment: DiscussionCommentEdge, text: string): boolean;
+export declare function exceedsDaysUntilStale(comment: DiscussionCommentEdge, staleTimeDays: number): boolean;
+export declare function hasReplies(comment: DiscussionCommentEdge): boolean;
+export declare function hasNonInstructionsReply(comments: DiscussionCommentEdge, INSTRUCTIONS_TEXT: string): boolean;
