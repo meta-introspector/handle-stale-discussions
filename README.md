@@ -12,7 +12,7 @@ In addition to handling proposed answers, this action will automatically close a
 
 ![Action Settings in repo](images/repoTokenSettings.png)
 
-There is an alternative way to enable `write permissions` for the token instead of changing the Settings. The `.yml ` file should look like this -
+There is an alternative way to enable `write permissions` for the token instead of changing the Repository Settings. The workflow yml file should look like this -
 
 ```
 name: HandleStaleDiscussions
