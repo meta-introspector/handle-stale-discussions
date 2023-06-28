@@ -12,6 +12,29 @@ In addition to handling proposed answers, this action will automatically close a
 
 ![Action Settings in repo](images/repoTokenSettings.png)
 
+There is an alternative way to enable `write permissions` for the token instead of changing the Settings. The `.yml ` file should look like this -
+
+```
+name: HandleStaleDiscussions
+on:
+  schedule:
+    - cron: '0 */4 * * *'
+  discussion_comment:
+    types: [created]
+
+jobs:
+  handle-stale-discussions:
+    name: Handle stale discussions
+    runs-on: ubuntu-latest
+    permissions:
+      discussions: write
+    steps:
+      - name: Stale discussions action
+        uses: aws-github-ops/handle-stale-discussions@v1
+        with:
+          github-token:  ${{secrets.GITHUB_TOKEN}}
+```
+
 2. Make sure your repo contains a label named `attention`, or a different label that can be provided as input.
 3. Make sure you have a discussion category that is answerable. This workflow only works on answerable discussions.
 4. Include this action in a GitHub workflow. Just below you can find an example workflow file you can put in `.github/workflows` that 
