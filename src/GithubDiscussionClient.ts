@@ -124,7 +124,7 @@ export class GithubDiscussionClient {
     return result.data.repository?.discussion?.comments as DiscussionCommentConnection;
   }
 
-  public async getDiscussionsMetaData(categoryID: string): Promise<DiscussionConnection> {
+  public async getDiscussionsMetaData(categoryID: string, pageSize: number, afterCursor: string): Promise<DiscussionConnection> {
     const discussionsCount = await this.getTotalDiscussionCount(categoryID);
     const result = await this.githubClient.query<GetDiscussionDataQuery, GetDiscussionDataQueryVariables>({
       query: GetDiscussionData,
@@ -132,7 +132,8 @@ export class GithubDiscussionClient {
         owner: this.owner,
         name: this.repo,
         categoryID: categoryID,
-        count: discussionsCount!,
+        pageSize: pageSize,
+        after: afterCursor,
       },
     })
 
