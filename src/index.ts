@@ -33,7 +33,7 @@ export async function processDiscussions(githubClient: GithubDiscussionClient) {
   const discussionCategoryIDList: string[] = await githubClient.getAnswerableDiscussionCategoryIDs();
 
   for (const discussionCategoryID of discussionCategoryIDList) {
-    const pageSize = 50;
+    const pageSize = 5;
     let hasNextPage = true;
     let afterCursor: string | null = null;
 
