@@ -33,33 +33,42 @@ export async function processDiscussions(githubClient: GithubDiscussionClient) {
   const discussionCategoryIDList: string[] = await githubClient.getAnswerableDiscussionCategoryIDs();
 
   for (const discussionCategoryID of discussionCategoryIDList) {
-    const discussions = await githubClient.getDiscussionsMetaData(discussionCategoryID);
-    for (const discussion of discussions.edges!) {
-      var discussionId = discussion?.node?.id ? discussion?.node?.id : "";
-      var discussionNum = discussion?.node?.number ? discussion.node.number : 0;
-      core.debug(`Processing discussionId: ${discussionId} with number: ${discussionNum} and bodyText: ${discussion?.node?.bodyText}`);
-      if (discussionId === "" || discussionNum === 0) {
-        core.warning(`Can not proceed checking discussion, discussionId is null!`);
-        continue;
+    const pageSize = 50;
+    let hasNextPage = true;
+    let afterCursor: string | null = null;
+
+    while (hasNextPage) {
+      const discussions = await githubClient.getDiscussionsMetaData(discussionCategoryID, pageSize, afterCursor!);
+      hasNextPage = discussions.pageInfo.hasNextPage;
+      afterCursor = discussions.pageInfo.endCursor!;
+    
+      for (const discussion of discussions.edges!) {
+        var discussionId = discussion?.node?.id ? discussion?.node?.id : "";
+        var discussionNum = discussion?.node?.number ? discussion.node.number : 0;
+        core.debug(`Processing discussionId: ${discussionId} with number: ${discussionNum} and bodyText: ${discussion?.node?.bodyText}`);
+        if (discussionId === "" || discussionNum === 0) {
+          core.warning(`Can not proceed checking discussion, discussionId is null!`);
+          continue;
+        }
+        else if (discussion?.node?.locked && CLOSE_LOCKED_DISCUSSIONS) {
+          core.info(`Discussion ${discussionId} is locked, closing it as resolved`);
+          githubClient.closeDiscussionAsResolved(discussionId);
+          continue;
+        }
+        else if (discussion?.node?.answer != null && CLOSE_ANSWERED_DISCUSSIONS) {
+          core.info(`Discussion ${discussionId} is already answered, so closing it as resolved.`);
+          githubClient.closeDiscussionAsResolved(discussionId);
+          continue;
+        }
+        else if (discussion?.node?.closed) {
+          core.debug(`Discussion ${discussionId} is closed, so no action needed.`);
+          continue;
+        }
+        else {
+          await processComments(discussion!, githubClient);
+        }
       }
-      else if (discussion?.node?.locked && CLOSE_LOCKED_DISCUSSIONS) {
-        core.info(`Discussion ${discussionId} is locked, closing it as resolved`);
-        githubClient.closeDiscussionAsResolved(discussionId);
-        continue;
-      }
-      else if (discussion?.node?.answer != null && CLOSE_ANSWERED_DISCUSSIONS) {
-        core.info(`Discussion ${discussionId} is already answered, so closing it as resolved.`);
-        githubClient.closeDiscussionAsResolved(discussionId);
-        continue;
-      }
-      else if (discussion?.node?.closed) {
-        core.debug(`Discussion ${discussionId} is closed, so no action needed.`);
-        continue;
-      }
-      else {
-        await processComments(discussion!, githubClient);
-      }
-    };
+    }
   }
 }
 
