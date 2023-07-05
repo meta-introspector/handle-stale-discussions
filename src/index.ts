@@ -2,7 +2,7 @@ import * as octokit from '@octokit/graphql-schema';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { GithubDiscussionClient } from "./GithubDiscussionClient";
-import { containsKeyword, containsNegativeReaction, containsPositiveReaction, hasNonInstructionsReply, exceedsDaysUntilStale, hasReplies } from './util';
+import { containsKeyword, containsNegativeReaction, containsPositiveReaction, hasNonInstructionsReply, exceedsDaysUntilStale, hasReplies, triggeredByNewComment } from './util';
 import { DiscussionCommentEdge } from './generated/graphql';
 
 const DAYS_UNTIL_STALE = parseFloat(core.getInput('days-until-stale', { required: false })) || 7;
@@ -21,9 +21,13 @@ const INSTRUCTIONS_TEXT = core.getInput('instructions-response-text', { required
 async function main() {
   const githubClient = new GithubDiscussionClient();
   await githubClient.initializeAttentionLabelId();
-  if (newCommentContainsKeyword()) {
-    core.info('Comment created with proposed answer keyword. Adding instuctions reply to comment');
-    githubClient.addInstructionTextReply(INSTRUCTIONS_TEXT, github.context.payload.discussion!.node_id, github.context.payload.comment!.node_id);
+  if (triggeredByNewComment()) {
+    if (github.context.payload.comment?.body.indexOf(PROPOSED_ANSWER_KEYWORD) >= 0) {
+      core.info('Comment created with proposed answer keyword. Adding instuctions reply to comment');
+      githubClient.addInstructionTextReply(INSTRUCTIONS_TEXT, github.context.payload.discussion!.node_id, github.context.payload.comment!.node_id);
+    } else {
+      core.info('Comment created without proposed answer keyword. No action needed');
+    }
   } else {
     await processDiscussions(githubClient);
   }
@@ -121,14 +125,6 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
   }
   else {
     core.debug(`No comments found for discussion ${discussionId}, No action needed!`);
-  }
-}
-
-function newCommentContainsKeyword() {
-  if (github.context.eventName === 'discussion_comment' && github.context.payload.action === 'created' && github.context.payload.comment?.body.indexOf(PROPOSED_ANSWER_KEYWORD) >= 0) {
-    return true;
-  } else {
-    return false;
   }
 }
 

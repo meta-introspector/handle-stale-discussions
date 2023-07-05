@@ -1,4 +1,5 @@
 import * as octokit from "@octokit/graphql-schema";
+import * as github from "@actions/github";
 import { DiscussionCommentConnection, DiscussionCommentEdge, ReactionContent } from "./generated/graphql";
 
 export function daysSinceComment(comment: DiscussionCommentEdge): number {
@@ -51,4 +52,12 @@ export function hasNonInstructionsReply(comments: DiscussionCommentEdge, INSTRUC
   return comments.node?.replies.edges?.some(comment => {
     return comment?.node?.bodyText?.indexOf(INSTRUCTIONS_TEXT)! < 0;
   })!;
+}
+
+export function triggeredByNewComment() {
+  if (github.context.eventName === 'discussion_comment' && github.context.payload.action === 'created') {
+    return true;
+  } else {
+    return false;
+  }
 }

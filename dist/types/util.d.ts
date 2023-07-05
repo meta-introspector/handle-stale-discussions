@@ -9,3 +9,4 @@ export declare function containsKeyword(comment: DiscussionCommentEdge, text: st
 export declare function exceedsDaysUntilStale(comment: DiscussionCommentEdge, staleTimeDays: number): boolean;
 export declare function hasReplies(comment: DiscussionCommentEdge): boolean;
 export declare function hasNonInstructionsReply(comments: DiscussionCommentEdge, INSTRUCTIONS_TEXT: string): boolean;
+export declare function triggeredByNewComment(): boolean;
