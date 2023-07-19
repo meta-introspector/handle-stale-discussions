@@ -1,5 +1,6 @@
-import { ApolloClient, InMemoryCache } from '@apollo/client/core';
+import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client/core';
 import { UpdateDiscussionComment ,AddDiscussionComment, MarkDiscussionCommentAsAnswer, GetDiscussionCount, GetAnswerableDiscussionId} from '../src/generated/graphql';
+import fetch from 'cross-fetch';
 //import { gql } from 'apollo-server';
 //import { MyMutation, MyQuery } from './myGraphQLQueries';
 
@@ -8,7 +9,7 @@ beforeEach(() => {
 });
 
 const client = new ApolloClient({
-  uri: 'https://api.github.com/graphql',
+  link: new HttpLink({ uri: 'https://api.github.com/graphql', fetch }),
   headers: {
     'x-api-key': 'key-redacted',
   },
