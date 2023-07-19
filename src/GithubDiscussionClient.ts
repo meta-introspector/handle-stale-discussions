@@ -145,7 +145,7 @@ export class GithubDiscussionClient {
     return result.data.repository?.discussions as DiscussionConnection;
   }
 
-  public async getAnswerableDiscussionCategoryIDs(): Promise<any> {
+  public async getAnswerableDiscussionCategoryIDs(): Promise<string[]> {
     const result = await this.githubClient.query<GetAnswerableDiscussionIdQuery, GetAnswerableDiscussionIdQueryVariables>({
       query: GetAnswerableDiscussionId,
       variables: {
@@ -166,7 +166,7 @@ export class GithubDiscussionClient {
     })
 
     if (!answerableCategoryIDs.length) {
-      throw new Error('There are no answerable discussion categories in this repository, this GitHub Action only works on answerable discussion categories.');
+      core.warning('There are no answerable discussion categories in this repository, this GitHub Action only works on answerable discussion categories.');
     }
 
     return answerableCategoryIDs;
