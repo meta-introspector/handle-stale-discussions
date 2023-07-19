@@ -14,7 +14,7 @@ export declare class GithubDiscussionClient {
     getDiscussionCommentCount(discussionNum: number): Promise<number>;
     getCommentsMetaData(discussionNum: number, commentCount: number): Promise<DiscussionCommentConnection>;
     getDiscussionsMetaData(categoryID: string, pageSize: number, afterCursor: string): Promise<DiscussionConnection>;
-    getAnswerableDiscussionCategoryIDs(): Promise<any>;
+    getAnswerableDiscussionCategoryIDs(): Promise<string[]>;
     closeDiscussionAsResolved(discussionId: string): Promise<void>;
     closeDiscussionAsOutdated(discussionId: string): Promise<void>;
     addCommentToDiscussion(discussionId: string, body: string): Promise<void>;

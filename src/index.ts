@@ -38,6 +38,10 @@ async function main() {
 
 export async function processDiscussions(githubClient: GithubDiscussionClient) {
   const discussionCategoryIDList: string[] = await githubClient.getAnswerableDiscussionCategoryIDs();
+  if (discussionCategoryIDList.length === 0) {
+    core.info('No answerable discussions found. Exiting.');
+    return;
+  }
 
   for (const discussionCategoryID of discussionCategoryIDList) {
     let hasNextPage = true;
