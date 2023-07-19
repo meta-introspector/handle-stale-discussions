@@ -106,9 +106,9 @@ Default:
 
 ### close-stale-as-answered
 
-Close stale discussions as answered
+Close stale discussions as answered, or supply `false` to close stale discussions as outdated
 
-Default: `false`. Stale discussions are closed as outdated.
+Default: `true`. Stale discussions are closed as answered.
 
 ### github-bot
 
