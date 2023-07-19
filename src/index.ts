@@ -11,7 +11,8 @@ const DAYS_UNTIL_STALE = parseFloat(core.getInput('days-until-stale', { required
 const PROPOSED_ANSWER_KEYWORD = core.getInput('proposed-answer-keyword', { required: false }) || '@github-actions proposed-answer';
 const CLOSE_LOCKED_DISCUSSIONS = core.getBooleanInput('close-locked-discussions', { required: false });
 const CLOSE_ANSWERED_DISCUSSIONS = core.getBooleanInput('close-answered-discussions', { required: false });
-const CLOSE_STALE_AS_ANSWERED = core.getBooleanInput('close-stale-as-answered', { required: false });
+const closeStaleAsAnsweredInput = core.getInput('close-stale-as-answered', { required: false });
+const CLOSE_STALE_AS_ANSWERED = closeStaleAsAnsweredInput.toLowerCase() === 'false' ? false : true;
 const CLOSE_FOR_STALENESS_RESPONSE_TEXT = core.getInput('stale-response-text', { required: false })
   || 'Closing the discussion for staleness. Please open a new discussion if you have further concerns.';
 const INSTRUCTIONS_TEXT = core.getInput('instructions-response-text', { required: false })
