@@ -14,6 +14,15 @@ jobs:
     steps:
       - name: Stale discussions action
         uses: aws-github-ops/handle-stale-discussions@v1
+        with:
+          # This will close stale-discussions as outdated instead of answered
+          close-stale-as-answered: false
+          # This will disable auto-closing answered discussions
+          close-stale-as-outdated: false
+          # This will disable auto-closing answered discussions
+          close-answered-discussions: false
+          # This will disable auto-closing locked discussions
+          close-locked-discussions: false
         env:
           GITHUB_TOKEN:  ${{secrets.GITHUB_TOKEN}}
 

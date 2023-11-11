@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { GithubDiscussionClient } from "./GithubDiscussionClient";
 import { containsKeyword, containsNegativeReaction, containsPositiveReaction, exceedsDaysUntilStale, hasReplies, triggeredByNewComment, hasNonBotReply } from './util';
-import { DiscussionCommentEdge } from './generated/graphql';
+import { DiscussionCommentEdge, MarkDiscussionCommentAsAnswer } from './generated/graphql';
 
 const PAGE_SIZE = parseInt(core.getInput('page-size', { required: false })) || 50;
 const GITHUB_BOT = core.getInput('github-bot', { required: false}) || 'github-actions';
@@ -18,10 +18,12 @@ const CLOSE_STALE_AS_ANSWERED = closeStaleAsAnsweredInput.toLowerCase() === 'fal
 const CLOSE_FOR_STALENESS_RESPONSE_TEXT = core.getInput('stale-response-text', { required: false })
   || 'Closing the discussion for staleness. Please open a new discussion if you have further concerns.';
 const INSTRUCTIONS_TEXT = core.getInput('instructions-response-text', { required: false })
-  || 'Hello! A team member has marked the above comment as the likely answer to this discussion thread. '
-  + '\n \n * If you agree, please upvote that comment, or click on Mark as answer. I will automatically mark the comment as the answer next time I check. '
+  || 'Hello! A team member has suggested the above comment as the likely answer to this discussion thread. '
+  + '\n \n * If you agree, please upvote that comment, or click on Mark as answer. I will automatically mark the discussion as answered with upvoted comment, next time I check. '
   + '\n \n * If this answer does not help you, please downvote the answer instead and let us know why it was not helpful. '
   + 'I will add a label to this discussion to gain attention from the team.';
+const OPEN_DISCUSSION_INSTRUCTION_TEXT = core.getInput('open-discussion-instructions-text', { required: false })
+  || 'Hello! Reopening discussion to make it searchable. ';
 
 async function main() {
   const githubClient = new GithubDiscussionClient();
@@ -57,13 +59,15 @@ export async function processDiscussions(githubClient: GithubDiscussionClient) {
       for (const discussion of discussions.edges!) {
         var discussionId = discussion?.node?.id ? discussion?.node?.id : "";
         var discussionNum = discussion?.node?.number ? discussion.node.number : 0;
-        core.debug(`Processing discussionId: ${discussionId} with number: ${discussionNum} and bodyText: ${discussion?.node?.bodyText}`);
+        core.info(`Processing discussionId: ${discussionId} with number: ${discussionNum} and bodyText: ${discussion?.node?.bodyText}`);
         if (discussionId === "" || discussionNum === 0) {
           core.warning(`Can not proceed checking discussion, discussionId is null!`);
           continue;
         }
         else if (discussion?.node?.closed) {
-          core.debug(`Discussion ${discussionId} is closed, so no action needed.`);
+          //core.debug(`Discussion ${discussionId} is closed, so no action needed.`);
+          core.info("Reopening closed discussion: ${discussionId}");
+          reopenClosedDiscussion(discussionId, githubClient);
           continue;
         }
         else if (discussion?.node?.locked && CLOSE_LOCKED_DISCUSSIONS) {
@@ -93,13 +97,13 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
   if (commentCount !== 0) {
     for (const comment of comments.edges!) {
       const commentId = comment?.node?.id;
-      core.debug(`Processing comment ${commentId} with bodytext: ${comment?.node?.bodyText}`);
+      core.info(`Processing comment ${commentId} with bodytext: ${comment?.node?.bodyText}`);
       if (!comment?.node?.bodyText || !comment.node.id) {
-        core.warning(`Comment body or id is null in discussion ${discussionId}, skipping comment!`);
+        core.info(`Comment body or id is null in discussion ${discussionId}, skipping comment!`);
         continue;
       }
       if (!containsKeyword(comment!, PROPOSED_ANSWER_KEYWORD)) {
-        core.debug(`No answer proposed on comment ${commentId}, no action needed!`);
+        core.info(`No answer proposed on comment ${commentId}, no action needed!`);
         continue;
       }
       else {
@@ -109,7 +113,8 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
         }
         else if (containsPositiveReaction(comment)) {
           core.info(`Positive reaction received. Marking discussion ${discussionId} as answered, and editing answer to remove proposed answer keyword`);
-          closeAndMarkAsAnswered(comment, discussionId, githubClient);
+          markDiscussionCommentAsAnswer(comment, discussionId, githubClient);
+          //closeAndMarkAsAnswered(comment, discussionId, githubClient);
         }
         else if (!hasReplies(comment)) {
           core.info(`Since this has no reply, adding instructions reply to comment ${commentId} in discussion ${discussionId}`);
@@ -120,12 +125,14 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
           githubClient.addAttentionLabelToDiscussion(discussionId);
         }
         else if (exceedsDaysUntilStale(comment, DAYS_UNTIL_STALE)) {
-          if (CLOSE_STALE_AS_ANSWERED) {
-            core.info(`No one has responded or provided a reaction, closing discussion ${discussionId} as answered`);
-            closeAndMarkAsAnswered(comment, discussionId, githubClient);
-          } else {
-            core.info(`No one has responded or provided a reaction, closing discussion ${discussionId} with a comment`);
-            closeDiscussionForStaleness(discussionId, githubClient);
+          if (!CLOSE_STALE_AS_ANSWERED) {
+            core.info(`No one has responded or provided a reaction, marking discussion ${discussionId} as answered`);
+            markDiscussionCommentAsAnswer(comment, discussionId, githubClient);
+            //closeAndMarkAsAnswered(comment, discussionId, githubClient);
+          } 
+          else {
+            core.info(`No action needed for discussion ${discussionId}`);
+            //closeDiscussionForStaleness(discussionId, githubClient);
           }
         }
       }
@@ -141,6 +148,8 @@ function closeDiscussionForStaleness(discussionId: string, githubClient: GithubD
   githubClient.closeDiscussionAsOutdated(discussionId);
 }
 
+//This functioon is no longer used since we are marking the discussion as answered instead of closing it
+/*
 function closeAndMarkAsAnswered(comment: DiscussionCommentEdge, discussionId: string, githubClient: GithubDiscussionClient) {
   const bodyText = comment?.node?.bodyText!;
   const commentId = comment?.node?.id!;
@@ -148,6 +157,20 @@ function closeAndMarkAsAnswered(comment: DiscussionCommentEdge, discussionId: st
   githubClient.updateDiscussionComment(commentId, updatedAnswerText);
   githubClient.markDiscussionCommentAsAnswer(commentId);
   githubClient.closeDiscussionAsResolved(discussionId);
+}
+*/
+
+function markDiscussionCommentAsAnswer(comment: DiscussionCommentEdge, discussionId: string, githubClient: GithubDiscussionClient) {
+  const bodyText = comment?.node?.bodyText!;
+  const commentId = comment?.node?.id!;
+  const updatedAnswerText = bodyText.replace(PROPOSED_ANSWER_KEYWORD, 'Answer: ');
+  githubClient.updateDiscussionComment(commentId, updatedAnswerText);
+  githubClient.markDiscussionCommentAsAnswer(commentId);
+}
+
+function reopenClosedDiscussion(discussionId: string, githubClient: GithubDiscussionClient) {
+  githubClient.addCommentToDiscussion(discussionId, OPEN_DISCUSSION_INSTRUCTION_TEXT);
+  githubClient.reopenDiscussion(discussionId);
 }
 
 main();
