@@ -41413,15 +41413,6 @@ export const MarkDiscussionCommentAsAnswer = gql`
   }
 }
     `;
-export const ReopenDiscussion = gql`
-    mutation ReopenDiscussion($discussionId: ID!) {
-  reopenDiscussion(input: {discussionId: $discussionId}) {
-    discussion {
-      id
-    }
-  }
-}
-    `;
 export const UpdateDiscussionComment = gql`
     mutation UpdateDiscussionComment($commentId: ID!, $body: String!) {
   updateDiscussionComment(input: {commentId: $commentId, body: $body}) {
@@ -41610,13 +41601,6 @@ export type MarkDiscussionCommentAsAnswerMutationVariables = Exact<{
 
 
 export type MarkDiscussionCommentAsAnswerMutation = { __typename?: 'Mutation', markDiscussionCommentAsAnswer?: { __typename?: 'MarkDiscussionCommentAsAnswerPayload', clientMutationId?: string | null } | null };
-
-export type ReopenDiscussionMutationVariables = Exact<{
-  discussionId: Scalars['ID']['input'];
-}>;
-
-
-export type ReopenDiscussionMutation = { __typename?: 'Mutation', reopenDiscussion?: { __typename?: 'ReopenDiscussionPayload', discussion?: { __typename?: 'Discussion', id: string } | null } | null };
 
 export type UpdateDiscussionCommentMutationVariables = Exact<{
   commentId: Scalars['ID']['input'];

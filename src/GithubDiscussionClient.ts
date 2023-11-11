@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import fetch from 'cross-fetch';
 import { DiscussionConnection } from "@octokit/graphql-schema";
-import { GetDiscussionCountQuery, GetDiscussionCountQueryVariables, GetDiscussionCount, GetDiscussionDataQuery, GetDiscussionDataQueryVariables, GetDiscussionData, GetAnswerableDiscussionIdQuery, GetAnswerableDiscussionIdQueryVariables, GetAnswerableDiscussionId, GetLabelIdQuery, GetLabelId, CloseDiscussionAsResolvedMutation, CloseDiscussionAsResolved, CloseDiscussionAsOutdatedMutation, CloseDiscussionAsOutdated, AddDiscussionCommentMutation, AddDiscussionComment, MarkDiscussionCommentAsAnswerMutation, MarkDiscussionCommentAsAnswer, AddLabelToDiscussionMutation, AddLabelToDiscussion, UpdateDiscussionCommentMutation, UpdateDiscussionComment, GetDiscussionCommentCountQuery, GetDiscussionCommentCount, DiscussionCommentConnection, GetCommentMetaDataQuery, GetCommentMetaDataQueryVariables, GetCommentMetaData, CloseDiscussionAsResolvedMutationVariables, CloseDiscussionAsOutdatedMutationVariables, AddDiscussionCommentMutationVariables, MarkDiscussionCommentAsAnswerMutationVariables, AddLabelToDiscussionMutationVariables, UpdateDiscussionCommentMutationVariables, GetDiscussionCommentCountQueryVariables, AddInstructionTextReplyMutation, AddInstructionTextReplyMutationVariables, AddInstructionTextReply, ReopenDiscussionMutation, ReopenDiscussionMutationVariables, ReopenDiscussion } from "./generated/graphql";
+import { GetDiscussionCountQuery, GetDiscussionCountQueryVariables, GetDiscussionCount, GetDiscussionDataQuery, GetDiscussionDataQueryVariables, GetDiscussionData, GetAnswerableDiscussionIdQuery, GetAnswerableDiscussionIdQueryVariables, GetAnswerableDiscussionId, GetLabelIdQuery, GetLabelId, CloseDiscussionAsResolvedMutation, CloseDiscussionAsResolved, CloseDiscussionAsOutdatedMutation, CloseDiscussionAsOutdated, AddDiscussionCommentMutation, AddDiscussionComment, MarkDiscussionCommentAsAnswerMutation, MarkDiscussionCommentAsAnswer, AddLabelToDiscussionMutation, AddLabelToDiscussion, UpdateDiscussionCommentMutation, UpdateDiscussionComment, GetDiscussionCommentCountQuery, GetDiscussionCommentCount, DiscussionCommentConnection, GetCommentMetaDataQuery, GetCommentMetaDataQueryVariables, GetCommentMetaData, CloseDiscussionAsResolvedMutationVariables, CloseDiscussionAsOutdatedMutationVariables, AddDiscussionCommentMutationVariables, MarkDiscussionCommentAsAnswerMutationVariables, AddLabelToDiscussionMutationVariables, UpdateDiscussionCommentMutationVariables, GetDiscussionCommentCountQueryVariables, AddInstructionTextReplyMutation, AddInstructionTextReplyMutationVariables, AddInstructionTextReply } from "./generated/graphql";
 
 export class GithubDiscussionClient {
   private _githubClient: ApolloClient<NormalizedCacheObject>;
@@ -265,26 +265,6 @@ export class GithubDiscussionClient {
 
     if (result.errors) {
       throw new Error(`Error updating discussion comment ${commentId}: ${result.errors}`);
-    }
-  }
-
-  public async reopenDiscussion(discussionId: string) {
-      try
-      {
-        const result = await this.githubClient.mutate<ReopenDiscussionMutation,ReopenDiscussionMutationVariables>({
-          mutation: ReopenDiscussion,
-          variables: {
-            discussionId
-          }
-        });
-
-        if (result.errors) {
-          throw new Error(`Error in reopening discussion ${discussionId}: ${result.errors}`);
-        }
-      }
-    catch(error)
-    {
-      core.warning(`Error in reopening discussion ${discussionId}: ${error}`);
     }
   }
 }

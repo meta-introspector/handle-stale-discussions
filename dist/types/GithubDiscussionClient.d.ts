@@ -22,5 +22,4 @@ export declare class GithubDiscussionClient {
     markDiscussionCommentAsAnswer(commentId: string): Promise<void>;
     addAttentionLabelToDiscussion(discussionId: string): Promise<void>;
     updateDiscussionComment(commentId: string, body: string): Promise<void>;
-    reopenDiscussion(discussionId: string): Promise<void>;
 }

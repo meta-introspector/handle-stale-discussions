@@ -1,7 +1,0 @@
-mutation ReopenDiscussion($discussionId: ID!){
-  reopenDiscussion(input: {discussionId: $discussionId}) {
-    discussion {
-      id
-    }
-  }
-}

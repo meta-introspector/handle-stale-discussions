@@ -39132,7 +39132,6 @@ export declare const AddLabelToDiscussion: import("graphql").DocumentNode;
 export declare const CloseDiscussionAsOutdated: import("graphql").DocumentNode;
 export declare const CloseDiscussionAsResolved: import("graphql").DocumentNode;
 export declare const MarkDiscussionCommentAsAnswer: import("graphql").DocumentNode;
-export declare const ReopenDiscussion: import("graphql").DocumentNode;
 export declare const UpdateDiscussionComment: import("graphql").DocumentNode;
 export declare const GetAnswerableDiscussionId: import("graphql").DocumentNode;
 export declare const GetCommentMetaData: import("graphql").DocumentNode;
@@ -39216,19 +39215,6 @@ export type MarkDiscussionCommentAsAnswerMutation = {
     markDiscussionCommentAsAnswer?: {
         __typename?: 'MarkDiscussionCommentAsAnswerPayload';
         clientMutationId?: string | null;
-    } | null;
-};
-export type ReopenDiscussionMutationVariables = Exact<{
-    discussionId: Scalars['ID']['input'];
-}>;
-export type ReopenDiscussionMutation = {
-    __typename?: 'Mutation';
-    reopenDiscussion?: {
-        __typename?: 'ReopenDiscussionPayload';
-        discussion?: {
-            __typename?: 'Discussion';
-            id: string;
-        } | null;
     } | null;
 };
 export type UpdateDiscussionCommentMutationVariables = Exact<{
