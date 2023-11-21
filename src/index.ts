@@ -105,6 +105,7 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
         continue;
       }
       else {
+        core.info("debugging the code for getting reactions");
         if (containsNegativeReaction(comment)) {
           core.info(`Negative reaction received. Adding attention label to discussion ${discussionId} `);
           githubClient.addAttentionLabelToDiscussion(discussionId);
