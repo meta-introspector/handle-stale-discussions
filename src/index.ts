@@ -23,17 +23,17 @@ const INSTRUCTIONS_TEXT = core.getInput('instructions-response-text', { required
 + '\n \n * If this answer does not help you, please downvote the answer instead and let us know why it was not helpful. '
   + 'I will add a label to this discussion to gain attention from the team.';
 const OPEN_DISCUSSION_INSTRUCTION_TEXT = core.getInput('open-discussion-instructions-text', { required: false })
-  || 'Hello! Reopening discussion to make it searchable. ';
+  || 'Hello! Reopening this discussion to make it searchable. ';
 
 async function main() {
   const githubClient = new GithubDiscussionClient();
   await githubClient.initializeAttentionLabelId();
   if (triggeredByNewComment()) {
     if (github.context.payload.comment?.body.indexOf(PROPOSED_ANSWER_KEYWORD) >= 0) {
-      core.info('Comment created with proposed answer keyword. Adding instuctions reply to comment');
+      core.info('Proposed keyword found. Adding Bot Instuctions reply!!');
       githubClient.addInstructionTextReply(INSTRUCTIONS_TEXT, github.context.payload.discussion!.node_id, github.context.payload.comment!.node_id);
     } else {
-      core.info('Comment created without proposed answer keyword. No action needed');
+      core.info('Comment created without proposed answer keyword. No action needed!!');
     }
   } else {
     await processDiscussions(githubClient);
@@ -43,7 +43,7 @@ async function main() {
 export async function processDiscussions(githubClient: GithubDiscussionClient) {
   const discussionCategoryIDList: string[] = await githubClient.getAnswerableDiscussionCategoryIDs();
   if (discussionCategoryIDList.length === 0) {
-    core.info('No answerable discussions found. Exiting.');
+    core.info('No answerable discussions found. Exiting!!');
     return;
   }
 
@@ -59,13 +59,13 @@ export async function processDiscussions(githubClient: GithubDiscussionClient) {
       for (const discussion of discussions.edges!) {
         var discussionId = discussion?.node?.id ? discussion?.node?.id : "";
         var discussionNum = discussion?.node?.number ? discussion.node.number : 0;
-        core.info(`Processing discussionId: ${discussionId} with number: ${discussionNum} and bodyText: ${discussion?.node?.bodyText}`);
+        core.info(`Processing discussionId: ${discussionId}, discussion number: ${discussionNum} and bodyText: ${discussion?.node?.bodyText}`);
         if (discussionId === "" || discussionNum === 0) {
-          core.warning(`Can not proceed checking discussion, discussionId is null!`);
+          core.warning(`Current discussion ID is NULL. Cannot proceed!!`);
           continue;
         }
         else if (discussion?.node?.closed) {
-          core.info("Reopening closed discussion: ${discussionId}");
+          core.info(`Reopening closed discussion: ${discussionId}`);
           reopenClosedDiscussion(discussionId, githubClient);
         }
         else if (discussion?.node?.locked && CLOSE_LOCKED_DISCUSSIONS) {
@@ -97,28 +97,28 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
       const commentId = comment?.node?.id;
       core.info(`Processing comment ${commentId} with bodytext: ${comment?.node?.bodyText}`);
       if (!comment?.node?.bodyText || !comment.node.id) {
-        core.warning(`Comment body or id is null in discussion ${discussionId}, skipping comment!`);
+        core.warning(`Comment body/Id is Null in discussion ${discussionId}, skipping comment!`);
         continue;
       }
       if (!containsKeyword(comment!, PROPOSED_ANSWER_KEYWORD)) {
-        core.info(`No answer proposed on comment ${commentId}, no action needed!`);
+        core.info(`No answer proposed on comment ${commentId}, No action needed!!`);
         continue;
       }
       else {
         if (containsNegativeReaction(comment)) {
-          core.info(`Negative reaction received. Adding attention label to discussion ${discussionId} to receive further attention from a repository maintainer`);
+          core.info(`Negative reaction received. Adding attention label to discussion ${discussionId} `);
           githubClient.addAttentionLabelToDiscussion(discussionId);
         }
         else if (containsPositiveReaction(comment)) {
-          core.info(`Positive reaction received. Marking discussion ${discussionId} as answered, and editing answer to remove proposed answer keyword`);
+          core.info(`Positive reaction received. Marking discussion ${discussionId} as answered, removing keyword`);
           markDiscussionCommentAsAnswer(comment, discussionId, githubClient);
         }
         else if (!hasReplies(comment)) {
-          core.info(`Since this has no reply, adding instructions reply to comment ${commentId} in discussion ${discussionId}`);
+          core.info(`Since this has no reply, adding Bot Instructions text to comment ${commentId} in discussion ${discussionId}`);
           githubClient.addInstructionTextReply(INSTRUCTIONS_TEXT, discussionId, commentId!);
         }
         else if (hasNonBotReply(comment, GITHUB_BOT)) {
-          core.info(`Discussion ${discussionId} has a reply, but not an instructions reply. Adding attention label`);
+          core.info(`Discussion ${discussionId} has Non-Bot Reply. Adding attention label`);
           githubClient.addAttentionLabelToDiscussion(discussionId);
         }
         else if (exceedsDaysUntilStale(comment, DAYS_UNTIL_STALE)) {
@@ -128,7 +128,7 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
             //closeAndMarkAsAnswered(comment, discussionId, githubClient);
           } 
           else {
-            core.info(`No action needed for discussion ${discussionId}`);
+            core.info(`No action needed for discussion ${discussionId} !!`);
             //closeDiscussionForStaleness(discussionId, githubClient);
           }
         }
@@ -136,7 +136,7 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
     };
   }
   else {
-    core.debug(`No comments found for discussion ${discussionId}, No action needed!`);
+    core.debug(`No comments found for discussion ${discussionId}, No action needed!!`);
   }
 }
 
