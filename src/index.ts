@@ -133,6 +133,10 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
             //closeDiscussionForStaleness(discussionId, githubClient);
           }
         }
+        else 
+        {
+          core.info(`No action needed for discussion ${discussionId} as nothing is found`);
+        }
       }
     };
   }
