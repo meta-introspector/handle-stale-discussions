@@ -69,13 +69,13 @@ export async function processDiscussions(githubClient: GithubDiscussionClient) {
           reopenClosedDiscussion(discussionId, githubClient);
         }
         else if (discussion?.node?.locked && CLOSE_LOCKED_DISCUSSIONS) {
-          core.info(`Discussion ${discussionId} is locked, closing it as resolved`);
-          githubClient.closeDiscussionAsResolved(discussionId);
+          core.info(`Discussion ${discussionId} is locked, keeping it open to make it searchable`);
+          //githubClient.closeDiscussionAsResolved(discussionId);
           continue;
         }
         else if (discussion?.node?.answer != null && CLOSE_ANSWERED_DISCUSSIONS) {
-          core.info(`Discussion ${discussionId} is already answered, so closing it as resolved.`);
-          githubClient.closeDiscussionAsResolved(discussionId);
+          core.info(`Discussion ${discussionId} is already answered, so no action needed!!`);
+          //githubClient.closeDiscussionAsResolved(discussionId);
           continue;
         }
         else {
@@ -105,7 +105,7 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
         continue;
       }
       else {
-        core.info("debugging the code for getting reactions");
+        //core.info("debugging the code for getting reactions");
         if (containsNegativeReaction(comment)) {
           core.info(`Negative reaction received. Adding attention label to discussion ${discussionId} `);
           githubClient.addAttentionLabelToDiscussion(discussionId);
@@ -145,10 +145,13 @@ export async function processComments(discussion: octokit.DiscussionEdge, github
   }
 }
 
+/* This function is no longer used since we are marking the discussion as answered instead of closing it
+
 function closeDiscussionForStaleness(discussionId: string, githubClient: GithubDiscussionClient) {
   githubClient.addCommentToDiscussion(discussionId, CLOSE_FOR_STALENESS_RESPONSE_TEXT);
   githubClient.closeDiscussionAsOutdated(discussionId);
 }
+*/
 
 //This functioon is no longer used since we are marking the discussion as answered instead of closing it
 /*
