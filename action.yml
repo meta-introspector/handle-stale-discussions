@@ -40,3 +40,6 @@ inputs:
   page-size:
     description: 'Page size count for discussions to be loaded per page'
     required: false
+  open-discussion-instructions-text:
+    description: 'Comment to post when a discussion is opened'
+    required: false
