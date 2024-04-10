@@ -8,7 +8,7 @@ jobs:
       issues: write
     runs-on: ubuntu-latest
     steps:
-    - uses: meta-introspector/closed-issue-message@main
+    - uses: aws-actions/closed-issue-message@v1
       with:
         # These inputs are both required
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
